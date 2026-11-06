@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Partner Rewards & Creator Earnings</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-pink-cream: #FFF4F6;
+            --bg-butter-yellow: #FFFDF0;
+            --card-butter: #FFFBEB;
+            --card-blush: #FFF0F3;
+            --border-soft: #FDE68A;
+            --border-pink: #FECDD3;
+            --text-dark: #451A03;
+            --text-muted: #92400E;
+            --accent-gold: #D97706;
+            --accent-rose: #E11D48;
+            --btn-gradient: linear-gradient(135deg, #F59E0B 0%, #EC4899 100%);
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background: linear-gradient(160deg, var(--bg-pink-cream) 0%, var(--bg-butter-yellow) 55%, #FFF5F7 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            padding: 16px 14px 36px 14px;
+        }
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        /* Security Lock Screen */
+        .auth-lock-card {
+            background: linear-gradient(135deg, #FFFDF4 0%, #FFF0F5 100%);
+            border: 2px solid var(--border-pink);
+            border-radius: 22px;
+            padding: 26px 18px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(225, 29, 72, 0.08);
+            margin-top: 24px;
+            display: none;
+        }
+        .auth-lock-card h3 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--accent-rose);
+            margin-bottom: 8px;
+        }
+        .auth-lock-card p {
+            font-size: 0.84rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            font-weight: 600;
+        }
+        /* Top Profile Card */
+        .profile-card {
+            background: linear-gradient(135deg, #FFFDF4 0%, #FFF0F5 100%);
+            border: 1.5px solid var(--border-soft);
+            border-radius: 22px;
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.08);
+            margin-bottom: 16px;
+        }
+        .avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #FDE047;
+            box-shadow: 0 4px 12px rgba(225, 29, 72, 0.15);
+            background: #FFF9DB;
+        }
+        .profile-info h2 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+        .badge-partner {
+            display: inline-block;
+            margin-top: 4px;
+            background: #FEF3C7;
+            color: #B45309;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid #FDE68A;
+        }
+        /* Balance Grid */
+        .balance-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .bal-box {
+            background: var(--card-butter);
+            border: 1.5px solid var(--border-soft);
+            border-radius: 20px;
+            padding: 16px 14px;
+            box-shadow: 0 6px 18px rgba(217, 119, 6, 0.06);
+        }
+        .bal-box.highlight {
+            background: linear-gradient(145deg, #FFFBEB 0%, #FFE4E6 100%);
+            border-color: var(--border-pink);
+        }
+        .bal-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--text-muted);
+        }
+        .bal-value {
+            font-size: 1.55rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin-top: 6px;
+        }
+        .bal-sub {
+            font-size: 0.7rem;
+            color: #B45309;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+        /* Withdraw CTA */
+        .withdraw-card {
+            background: linear-gradient(135deg, #FFF9DB 0%, #FFEAF0 100%);
+            border: 1.5px solid #FCD34D;
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 18px;
+            text-align: center;
+        }
+        .btn-main {
+            width: 100%;
+            background: var(--btn-gradient);
+            color: #FFFFFF;
+            border: none;
+            padding: 14px 20px;
+            font-size: 0.96rem;
+            font-weight: 800;
+            border-radius: 14px;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(236, 72, 153, 0.25);
+            transition: transform 0.15s ease, opacity 0.15s ease;
+        }
+        .btn-main:active {
+            transform: scale(0.98);
+        }
+        .btn-main:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+        .withdraw-hint {
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+            font-weight: 600;
+        }
+        /* Analytics Graph Card */
+        .chart-card {
+            background: #FFFDF7;
+            border: 1.5px solid var(--border-soft);
+            border-radius: 22px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 22px rgba(217, 119, 6, 0.06);
+        }
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .chart-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+        .tab-group {
+            display: flex;
+            background: #FEF3C7;
+            padding: 3px;
+            border-radius: 10px;
+            gap: 4px;
+        }
+        .tab-btn {
+            border: none;
+            background: transparent;
+            color: #92400E;
+            font-size: 0.74rem;
+            font-weight: 700;
+            padding: 5px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .tab-btn.active {
+            background: #FFFFFF;
+            color: #D97706;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+        /* Recent Withdrawals */
+        .history-card {
+            background: #FFFDF7;
+            border: 1.5px solid var(--border-soft);
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 16px;
+        }
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dashed #FDE68A;
+            font-size: 0.82rem;
+        }
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        .status-pill {
+            padding: 3px 9px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+        .status-PENDING { background: #FEF3C7; color: #D97706; }
+        .status-SUCCESS { background: #D1FAE5; color: #059669; }
+        .status-DENIED { background: #FFE4E6; color: #E11D48; }
+        /* Revenue Share & Policy Info Banner */
+        .rev-banner {
+            background: linear-gradient(135deg, #FFF0F3 0%, #FEF9C3 100%);
+            border: 1.5px solid var(--border-pink);
+            border-radius: 18px;
+            padding: 15px 16px;
+            text-align: left;
+            font-size: 0.79rem;
+            line-height: 1.5;
+            color: #881337;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+        .rev-banner ul {
+            margin-top: 8px;
+            padding-left: 18px;
+        }
+        .rev-banner li {
+            margin-bottom: 5px;
+        }
+        /* Modal Overlay */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(69, 26, 3, 0.45);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 999;
+        }
+        .modal-box {
+            background: linear-gradient(160deg, #FFFDF5 0%, #FFF0F3 100%);
+            border: 2px solid #FDE68A;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 400px;
+            padding: 22px 18px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.18);
+        }
+        .input-group {
+            margin-bottom: 14px;
+            text-align: left;
+        }
+        .input-group label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+        .input-field {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1.5px solid #FCD34D;
+            background: #FFFFFF;
+            font-size: 0.92rem;
+            color: var(--text-dark);
+            outline: none;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .btn-secondary {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1.5px solid #FCD34D;
+            background: #FFFBEB;
+            color: var(--text-muted);
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .alert-msg {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 8px 10px;
+            border-radius: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Security Verification Screen if opened outside Telegram WebApp -->
+    <div id="authLockCard" class="auth-lock-card">
+        <h3>🔒 Secure Telegram WebApp Only</h3>
+        <p>For your wallet security, this partner dashboard can only be opened directly through the official Telegram Bot WebApp button inside Telegram.</p>
+    </div>
+
+    <div id="mainAppContent">
+        <!-- Top Owner Profile -->
+        <div class="profile-card">
+            <img id="ownerAvatar" class="avatar" src="https://ui-avatars.com/api/?name=Partner&background=FFE8CC&color=8A4B08" alt="Avatar" />
+            <div class="profile-info">
+                <h2 id="ownerName">Verifying Session...</h2>
+                <span class="badge-partner">👑 Verified GC Partner</span>
+            </div>
+        </div>
+
+        <!-- Total vs Withdrawable Balance -->
+        <div class="balance-grid">
+            <div class="bal-box">
+                <div class="bal-label">💰 Total Balance</div>
+                <div class="bal-value" id="totalBal">₹0.00</div>
+                <div class="bal-sub" id="lockedBal">⏳ Maturing: ₹0.00</div>
+            </div>
+            <div class="bal-box highlight">
+                <div class="bal-label">🏦 Withdrawable</div>
+                <div class="bal-value" id="withdrawableBal">₹0.00</div>
+                <div class="bal-sub">✅ Unlocked &amp; Ready</div>
+            </div>
+        </div>
+
+        <!-- Withdraw Section -->
+        <div class="withdraw-card">
+            <button id="openWithdrawBtn" class="btn-main" onclick="openWithdrawModal()" disabled>
+                💸 Withdraw Earnings via UPI
+            </button>
+            <div class="withdraw-hint" id="withdrawHint">
+                Min ₹100 • Max ₹500/Day • Ad Earnings Unlock in 3 Days
+            </div>
+        </div>
+
+        <!-- 7 Days & 30 Days Earnings Graph -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">📈 Daily Earnings Overview</div>
+                    <div style="font-size:0.74rem; color:#B45309; font-weight:700;" id="chartPeriodTotal">Last 7 Days: ₹0.00</div>
+                </div>
+                <div class="tab-group">
+                    <button id="tab7d" class="tab-btn active" onclick="switchChart('7d')">7 Days</button>
+                    <button id="tab30d" class="tab-btn" onclick="switchChart('30d')">30 Days</button>
+                </div>
+            </div>
+            <canvas id="earningsChart" height="190"></canvas>
+        </div>
+
+        <!-- Recent Withdrawals -->
+        <div class="history-card">
+            <div class="chart-title" style="margin-bottom:8px;">🧾 Recent Withdrawal Requests</div>
+            <div id="withdrawalList" style="font-size:0.8rem; color:#92400E;">No withdrawal history yet.</div>
+        </div>
+
+        <!-- 80% Revenue Share & DM-Only Ad Policy Details -->
+        <div class="rev-banner">
+            🌸 <b>80% Partner Revenue Share &amp; Program Details</b>
+            <ul>
+                <li><b>Private DM Ads Only:</b> Currently, we only show promotional ads in users' <b>Private DMs</b> and <b>never inside Group Chats</b>, keeping your groups 100% clean and spam-free!</li>
+                <li><b>80% Revenue Share:</b> We share <b>80% of users' ad revenue</b> directly with Group Owners! Every time an active member receives an ad in DM, ₹0.30 is distributed across their Top 10 active groups from the last 7 days (weighted <b>50% by Bot Engagement</b> &amp; <b>50% by Total Group Messages</b>).</li>
+                <li><b>Unlocking &amp; Maturation:</b> Normal ad revenue unlocks for UPI withdrawal in <b>3 Days</b>. Group Addition Bonuses (₹25 / ₹10) unlock after the bot remains an active Admin in your group for <b>7 continuous days</b> without being removed or demoted.</li>
+                <li><b>Use Balance for Ads:</b> You can also spend your earned partner balance directly to launch your own promotional ads using the <code>/ad</code> command in the bot!</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Multi-Step Withdraw Modal -->
+<div class="modal-backdrop" id="withdrawModal">
+    <div class="modal-box">
+        <h3 style="font-size:1.05rem; font-weight:800; margin-bottom:12px;">🏧 Instant UPI Payout</h3>
+
+        <!-- STEP 1: Amount & UPI ID -->
+        <div id="step1Box">
+            <div class="input-group">
+                <label>Withdrawal Amount (Min ₹100 - Max ₹500)</label>
+                <input type="number" id="wdAmount" class="input-field" placeholder="e.g. 150" min="100" max="500" step="0.01" />
+            </div>
+            <div class="input-group">
+                <label>Your UPI ID</label>
+                <input type="text" id="wdUpi" class="input-field" placeholder="yourname@okaxis" />
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeWithdrawModal()">Cancel</button>
+                <button class="btn-main" style="flex:1.4;" onclick="goToStep2()">Next ➔</button>
+            </div>
+        </div>
+
+        <!-- STEP 2: Optional Mobile No & Process -->
+        <div id="step2Box" style="display:none;">
+            <div class="input-group">
+                <label>Mobile Number (Optional)</label>
+                <input type="tel" id="wdMobile" class="input-field" placeholder="10-digit mobile number (optional)" />
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="backToStep1()">⬅ Back</button>
+                <button id="processBtn" class="btn-main" style="flex:1.5;" onclick="submitWithdrawal()">✅ Process Payout</button>
+            </div>
+        </div>
+
+        <div id="modalAlert" class="alert-msg"></div>
+    </div>
+</div>
+
+<script>
+    const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+    if (tg) {
+        tg.ready();
+        tg.expand();
+    }
+
+    const rawInitData = (tg && tg.initData) ? tg.initData : "";
+    let dashboardData = null;
+    let chartInstance = null;
+
+    function showSecurityLock(reason) {
+        document.getElementById("mainAppContent").style.display = "none";
+        const lockCard = document.getElementById("authLockCard");
+        lockCard.style.display = "block";
+        if (reason) {
+            lockCard.querySelector("p").innerText = reason;
+        }
+    }
+
+    async function loadDashboard() {
+        if (!rawInitData) {
+            showSecurityLock("Access Denied: Please open this Partner Dashboard exclusively via the official WebApp button inside the Telegram Bot.");
+            return;
+        }
+        try {
+            const res = await fetch("/api/owner_data", {
+                method: "GET",
+                headers: {
+                    "X-Telegram-Init-Data": rawInitData
+                }
+            });
+            const data = await res.json();
+            if (!res.ok || data.status !== "ok") {
+                showSecurityLock(data.message || "Telegram WebApp verification failed. Please reopen from the bot.");
+                return;
+            }
+            dashboardData = data;
+
+            document.getElementById("ownerName").innerText = data.owner_name;
+            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.photo_url) {
+                document.getElementById("ownerAvatar").src = tg.initDataUnsafe.user.photo_url;
+            } else {
+                document.getElementById("ownerAvatar").src = data.avatar_url;
+            }
+
+            document.getElementById("totalBal").innerText = `₹${data.total_balance.toFixed(2)}`;
+            document.getElementById("withdrawableBal").innerText = `₹${data.withdrawable_balance.toFixed(2)}`;
+            document.getElementById("lockedBal").innerText = `⏳ Maturing (3d/7d): ₹${data.locked_balance.toFixed(2)}`;
+
+            const btn = document.getElementById("openWithdrawBtn");
+            if (data.withdrawable_balance < 100) {
+                btn.disabled = true;
+                document.getElementById("withdrawHint").innerText =
+                    `You need ₹${(100 - data.withdrawable_balance).toFixed(2)} more in withdrawable balance (Min ₹100).`;
+            } else {
+                btn.disabled = false;
+                document.getElementById("withdrawHint").innerText =
+                    `Available to withdraw today: up to ₹${Math.min(data.withdrawable_balance, data.remaining_daily_limit).toFixed(2)}`;
+            }
+
+            renderHistory(data.withdrawals);
+            switchChart('7d');
+        } catch (err) {
+            console.error("Error loading owner data:", err);
+        }
+    }
+
+    function switchChart(mode) {
+        if (!dashboardData) return;
+        document.getElementById("tab7d").classList.toggle("active", mode === '7d');
+        document.getElementById("tab30d").classList.toggle("active", mode === '30d');
+
+        const source = mode === '7d' ? dashboardData.chart_7d : dashboardData.chart_30d;
+        document.getElementById("chartPeriodTotal").innerText =
+            `Last ${mode === '7d' ? '7' : '30'} Days Total: ₹${source.total.toFixed(2)}`;
+
+        const ctx = document.getElementById("earningsChart").getContext("2d");
+        if (chartInstance) chartInstance.destroy();
+
+        const grad = ctx.createLinearGradient(0, 0, 0, 200);
+        grad.addColorStop(0, "rgba(245, 158, 11, 0.38)");
+        grad.addColorStop(1, "rgba(254, 205, 211, 0.05)");
+
+        chartInstance = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: source.labels,
+                datasets: [{
+                    label: "Earnings (₹)",
+                    data: source.values,
+                    borderColor: "#D97706",
+                    backgroundColor: grad,
+                    borderWidth: 2.5,
+                    pointBackgroundColor: "#E11D48",
+                    pointRadius: 3,
+                    fill: true,
+                    tension: 0.35
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: "#92400E", font: { size: 10 } }, grid: { color: "#FEF3C7" } },
+                    x: { ticks: { color: "#92400E", font: { size: 10 }, maxTicksLimit: 7 }, grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    function renderHistory(list) {
+        const box = document.getElementById("withdrawalList");
+        if (!list || list.length === 0) {
+            box.innerHTML = "No withdrawal requests yet.";
+            return;
+        }
+        box.innerHTML = list.map(item => `
+            <div class="history-item">
+                <div>
+                    <b>₹${item.amount}</b> ➔ <code>${item.upi_id}</code><br/>
+                    <span style="font-size:0.7rem; color:#B45309;">${item.date}</span>
+                </div>
+                <span class="status-pill status-${item.status}">${item.status}</span>
+            </div>
+        `).join("");
+    }
+
+    function showAlert(msg, isErr = true) {
+        const el = document.getElementById("modalAlert");
+        el.style.display = "block";
+        el.style.background = isErr ? "#FFE4E6" : "#D1FAE5";
+        el.style.color = isErr ? "#E11D48" : "#047857";
+        el.innerText = msg;
+    }
+
+    function openWithdrawModal() {
+        if (!dashboardData || dashboardData.withdrawable_balance < 100) return;
+        document.getElementById("modalAlert").style.display = "none";
+        document.getElementById("step1Box").style.display = "block";
+        document.getElementById("step2Box").style.display = "none";
+        document.getElementById("withdrawModal").style.display = "flex";
+    }
+
+    function closeWithdrawModal() {
+        document.getElementById("withdrawModal").style.display = "none";
+    }
+
+    function goToStep2() {
+        const amt = parseFloat(document.getElementById("wdAmount").value || "0");
+        const upi = (document.getElementById("wdUpi").value || "").trim();
+
+        if (!dashboardData || dashboardData.withdrawable_balance < 100) {
+            showAlert("Withdrawable balance must be at least ₹100.");
+            return;
+        }
+        if (isNaN(amt) || amt < 100 || amt > 500) {
+            showAlert("Please enter an amount between ₹100 and ₹500.");
+            return;
+        }
+        if (amt > dashboardData.withdrawable_balance) {
+            showAlert(`Amount exceeds your withdrawable balance of ₹${dashboardData.withdrawable_balance.toFixed(2)}.`);
+            return;
+        }
+        if (!upi.includes("@") || upi.length < 5) {
+            showAlert("Please enter a valid UPI ID (e.g. name@upi).");
+            return;
+        }
+        document.getElementById("modalAlert").style.display = "none";
+        document.getElementById("step1Box").style.display = "none";
+        document.getElementById("step2Box").style.display = "block";
+    }
+
+    function backToStep1() {
+        document.getElementById("step2Box").style.display = "none";
+        document.getElementById("step1Box").style.display = "block";
+    }
+
+    async function submitWithdrawal() {
+        const amt = parseFloat(document.getElementById("wdAmount").value || "0");
+        const upi = (document.getElementById("wdUpi").value || "").trim();
+        const mob = (document.getElementById("wdMobile").value || "").trim();
+        const btn = document.getElementById("processBtn");
+
+        btn.disabled = true;
+        btn.innerText = "Processing...";
+        try {
+            const res = await fetch("/api/withdraw", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Telegram-Init-Data": rawInitData
+                },
+                body: JSON.stringify({
+                    init_data: rawInitData,
+                    amount: amt,
+                    upi_id: upi,
+                    mobile_no: mob
+                })
+            });
+            const data = await res.json();
+            if (data.status === "ok") {
+                showAlert(data.message, false);
+                await loadDashboard();
+                setTimeout(() => closeWithdrawModal(), 1800);
+            } else {
+                showAlert(data.message || "Request failed.");
+            }
+        } catch (e) {
+            showAlert("Network error occurred. Please retry.");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "✅ Process Payout";
+        }
+    }
+
+    loadDashboard();
+</script>
+</body>
+</html>
